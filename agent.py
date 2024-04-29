@@ -78,7 +78,7 @@ class Agent:
 
         while True:
             player_input = [int(i) for i in input("Enter your move: ").split()]
-            move = (player_input[0], player_input[1])
+            move = (0, 0, 0, player_input[0], player_input[1])
             if state.is_valid_move(move):
                 break
             else:
@@ -118,26 +118,19 @@ class Agent:
         """
         Prints the game board and indicates the last move played.
         """
-        h = state.h
-        w = state.w
-        print("   " + " " * (4 * best_move[1]) + " v " + " " * (4 * (w - best_move[1] - 1)) + " ")
-        print("  +" + "-" * (4 * best_move[1]) + " ! " + "-" * (4 * (w - best_move[1] - 1)) + "+")
-        for i in range(w):
-            row_string = "  "
-            if i == best_move[0]:
-                row_string = ">--"
-            for j in range(h):
-                if not (j == 0 and i == best_move[0]):
+        h = state.d[4]
+        w = state.d[3]
+        for s in range(state.d[2]):
+            print("+" + "-" * (4*w-1) + "+")
+            for i in range(w):
+                row_string = ""
+                for j in range(h):
                     row_string += "|"
-                if (i, j) == best_move:
-                    row_string += "[" + self.piece + "]"
-                else:
-                    centre_piece = state.board[i][j]
-                    row_string += " " + centre_piece + " "
-            if i == best_move[0]:
-                row_string += "--<"
-            else:
+                    if (s, i, j) == (best_move[2], best_move[3], best_move[4]):
+                        row_string += "[" + self.piece + "]"
+                    else:
+                        centre_piece = state.board[0][0][s][i][j]
+                        row_string += " " + centre_piece + " "
                 row_string += "|"
-            print(row_string)
-        print("  +" + "-" * (4 * best_move[1]) + " ! " + "-" * (4 * (w - best_move[1] - 1)) + "+")
-        print("   " + " " * (4 * best_move[1]) + " ^ " + " " * (4 * (w - best_move[1] - 1)) + " ")
+                print(row_string)
+            print("+" + "-" * (4*w-1) + "+")

@@ -55,7 +55,7 @@ class GameRunner:
         t.runner_comment(' vs '.join(a.nickname() for a in self.agents.values()))
         p("Let the game begin!")
         t.runner_comment("Here is the starting board:")
-        t.print_move(None, None, None, state)
+        # t.print_move(None, None, None, state)
         t.runner_comment("Let the game begin!")
 
         while not (winner := state.winner()):
@@ -66,7 +66,7 @@ class GameRunner:
                 if not state.is_valid_move(move):
                     raise ValueError
                 state = state.make_move(move)
-                t.print_move(curr_agent.nickname(), piece, move, state)
+                # t.print_move(curr_agent.nickname(), piece, move, state)
                 p(state)
                 p()
             except TimeoutError:
@@ -108,23 +108,14 @@ if __name__ == '__main__':
     """
     import minimax_agent
 
-    if len(sys.argv) > 1:
-        rows = int(sys.argv[1])
-        cols = int(sys.argv[2])
-        k = int(sys.argv[3])
-        players = int(sys.argv[4])   # 0 or 1
-        time_limit = int(sys.argv[5]) if len(sys.argv) > 5 else None
-        auto_moves = int(sys.argv[6]) if len(sys.argv) > 6 else 0
-    else:
-        rows = 7
-        cols = 7
-        k = 5
-        players = 0
-        time_limit = 1.0
-        auto_moves = 0
+    size = (1, 1, 4, 4, 4)
+    k = 4
+    players = 0
+    time_limit = None
+    auto_moves = 0
 
     """Various starting board configurations"""
-    s = game.GameState.empty((rows, cols), k)
+    s = game.GameState.empty(size, k)
     # s = game.GameState.no_corners()
     # s = game.GameState.no_corners_small()
     # s = game.GameState.tic_tac_toe()
@@ -141,10 +132,10 @@ if __name__ == '__main__':
     Pre-moves a certain number of times for a unique starting board configuration.
     Comment out this code for a blank board.
     """
-    for i in range(auto_moves):
-        while not s.is_valid_move(move := (random.randint(0, s.w - 1), random.randint(0, s.h - 1))):
-            pass
-        s = s.make_move(move)
+    # for i in range(auto_moves):
+    #     while not s.is_valid_move(move := (random.randint(0, s.w - 1), random.randint(0, s.h - 1))):
+    #         pass
+    #     s = s.make_move(move)
 
     # print(s)
     # print(a1.static_eval(s))
