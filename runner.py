@@ -108,15 +108,15 @@ if __name__ == '__main__':
     """
     import minimax_agent
 
-    size = (1, 1, 4, 4, 4)
+    size = (4, 4, 4, 4)
     k = 4
     players = 0
-    time_limit = None
+    time_limit = 15
     auto_moves = 0
 
     """Various starting board configurations"""
-    s = game.GameState.empty(size, k)
-    # s = game.GameState.no_corners()
+    # s = game.GameState.empty(size, k)
+    s = game.GameState.no_corners()
     # s = game.GameState.no_corners_small()
     # s = game.GameState.tic_tac_toe()
 

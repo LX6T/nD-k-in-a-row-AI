@@ -2,11 +2,11 @@
 minimax_agent.py
 author: <YOUR NAME(s) HERE>
 """
-from math import log10
 import agent
 import game
 import time
 import random
+
 
 class MinimaxAgent(agent.Agent):
     def __init__(self, initial_state: game.GameState, piece: str):
@@ -50,11 +50,10 @@ class MinimaxAgent(agent.Agent):
             for j in range(d[1]):
                 for k in range(d[2]):
                     for x in range(d[3]):
-                        for y in range(d[4]):
-                            if state.board[i][j][k][x][y] == game.EMPTY_PIECE:
-                                max_depth += 1
-                                if best_move is not None:
-                                    best_move = (i, j, k, x, y)
+                        if state.board[i][j][k][x] == game.EMPTY_PIECE:
+                            max_depth += 1
+                            if best_move is not None:
+                                best_move = (i, j, k, x)
 
         """Limit the maximum search depth to 3"""
         max_depth = min(max_depth, 3)
@@ -65,7 +64,7 @@ class MinimaxAgent(agent.Agent):
         while depth <= max_depth:
 
             """Initialise Zobrist hash table"""
-            z_table = [[random.getrandbits(32) for _ in range(2)] for _ in range(d[0]*d[1]*d[2]*d[3]*d[4])]
+            z_table = [[random.getrandbits(32) for _ in range(2)] for _ in range(d[0] * d[1] * d[2] * d[3])]
             z_hashing = (z_table, dict(), 0)
 
             """Search for best value at current depth"""
@@ -154,63 +153,62 @@ class MinimaxAgent(agent.Agent):
                 for j in range(d[1]):
                     for k in range(d[2]):
                         for x in range(d[3]):
-                            for y in range(d[4]):
-                                """Iterate until all spaces have been tried, exit early if time limit is reached"""
-                                if timeout is None or time.perf_counter() < timeout - self.wrapup_time:
+                            """Iterate until all spaces have been tried, exit early if time limit is reached"""
+                            if timeout is None or time.perf_counter() < timeout - self.wrapup_time:
 
-                                    if state.board[i][j][k][x][y] == game.EMPTY_PIECE:
+                                if state.board[i][j][k][x] == game.EMPTY_PIECE:
 
-                                        """Play A in square (i,j,k,x,y), update Zobrist hash"""
-                                        new_state = state.make_move((i, j, k, x, y))
-                                        new_z_key = None
-                                        if z_hashing is not None:
-                                            z_index = 0 if a_piece == game.X_PIECE else 1
-                                            board_index = (i*d[1]*d[2]*d[3]*d[4] +
-                                                           j*d[2]*d[3]*d[4] +
-                                                           k*d[3]*d[4] +
-                                                           x*d[4] + y)
-                                            new_z_key = z_key ^ z_table[board_index][z_index]
+                                    """Play A in square (i,j,k,x,y), update Zobrist hash"""
+                                    new_state = state.make_move((i, j, k, x))
+                                    new_z_key = None
+                                    if z_hashing is not None:
+                                        z_index = 0 if a_piece == game.X_PIECE else 1
+                                        board_index = (i * d[1] * d[2] * d[3] +
+                                                       j * d[2] * d[3] +
+                                                       k * d[3] +
+                                                       x)
+                                        new_z_key = z_key ^ z_table[board_index][z_index]
 
-                                        if new_z_key is not None and new_z_key in z_memory:
-                                            """If already calculated for this state, no need to search further"""
-                                            (move, value) = z_memory[new_z_key]
-                                        elif new_state.winner() == a_piece:
-                                            """If A has won, no need to search further"""
-                                            value = self.static_eval(new_state) / 10 ** (depth_remaining - 1)
-                                        else:
-                                            """Run minimax on new state"""
-                                            new_time_limit = None
-                                            if timeout is not None:
-                                                new_time_limit = timeout - time.perf_counter()
-                                            new_z_hashing = (z_table, z_memory, new_z_key)
-                                            move, value = self.minimax(new_state, depth_remaining - 1, new_time_limit,
-                                                                       alpha, beta, new_z_hashing)
+                                    if new_z_key is not None and new_z_key in z_memory:
+                                        """If already calculated for this state, no need to search further"""
+                                        (move, value) = z_memory[new_z_key]
+                                    elif new_state.winner() == a_piece:
+                                        """If A has won, no need to search further"""
+                                        value = self.static_eval(new_state) / 10 ** (depth_remaining - 1)
+                                    else:
+                                        """Run minimax on new state"""
+                                        new_time_limit = None
+                                        if timeout is not None:
+                                            new_time_limit = timeout - time.perf_counter()
+                                        new_z_hashing = (z_table, z_memory, new_z_key)
+                                        move, value = self.minimax(new_state, depth_remaining - 1, new_time_limit,
+                                                                   alpha, beta, new_z_hashing)
 
-                                        """Exit early if reached time limit"""
-                                        if value is None:
-                                            break
-
-                                        """Update best move, alpha and beta"""
-                                        if a_piece == game.X_PIECE:
-                                            if value > best_value:
-                                                best_move = (i, j, k, x, y)
-                                                best_value = value
-                                            if beta is not None and best_value > beta:
-                                                return best_move, best_value
-                                            elif alpha is not None:
-                                                alpha = max(alpha, best_value)
-                                        elif a_piece == game.O_PIECE:
-                                            if value < best_value:
-                                                best_move = (i, j, k, x, y)
-                                                best_value = value
-                                            if alpha is not None and best_value < alpha:
-                                                return best_move, best_value
-                                            elif beta is not None:
-                                                beta = min(beta, best_value)
-
-                                else:
                                     """Exit early if reached time limit"""
-                                    break
+                                    if value is None:
+                                        break
+
+                                    """Update best move, alpha and beta"""
+                                    if a_piece == game.X_PIECE:
+                                        if value > best_value:
+                                            best_move = (i, j, k, x)
+                                            best_value = value
+                                        if beta is not None and best_value > beta:
+                                            return best_move, best_value
+                                        elif alpha is not None:
+                                            alpha = max(alpha, best_value)
+                                    elif a_piece == game.O_PIECE:
+                                        if value < best_value:
+                                            best_move = (i, j, k, x)
+                                            best_value = value
+                                        if alpha is not None and best_value < alpha:
+                                            return best_move, best_value
+                                        elif beta is not None:
+                                            beta = min(beta, best_value)
+
+                            else:
+                                """Exit early if reached time limit"""
+                                break
 
             if z_hashing is not None:
                 z_memory[z_key] = (best_move, best_value)
@@ -239,41 +237,39 @@ class MinimaxAgent(agent.Agent):
                 for j in range(d[1]):
                     for k in range(d[2]):
                         for x in range(d[3]):
-                            for y in range(d[4]):
-                                valid, steps = state.is_valid_starting_point((i, j, k, x, y), direction)
-                                if valid:
-                                    # print((i, j, k, x, y), direction, steps)
-                                    for step in range(steps):
-                                        x_pieces = 0
-                                        o_pieces = 0
-                                        x_blocked = False
-                                        o_blocked = False
-                                        for c in range(state.k):
-                                            p = (i + direction[0] * (step + c),
-                                                 j + direction[1] * (step + c),
-                                                 k + direction[2] * (step + c),
-                                                 x + direction[3] * (step + c),
-                                                 y + direction[4] * (step + c))
-                                            value = state.board[p[0]][p[1]][p[2]][p[3]][p[4]]
-                                            if value == game.X_PIECE:
-                                                x_pieces += 1
-                                                o_blocked = True
-                                            elif value == game.O_PIECE:
-                                                o_pieces += 1
-                                                x_blocked = True
-                                            elif value == game.BLOCK_PIECE:
-                                                x_blocked = True
-                                                o_blocked = True
+                            valid, steps = state.is_valid_starting_point((i, j, k, x), direction)
+                            if valid:
+                                # print((i, j, k, x, y), direction, steps)
+                                for step in range(steps):
+                                    x_pieces = 0
+                                    o_pieces = 0
+                                    x_blocked = False
+                                    o_blocked = False
+                                    for c in range(state.k):
+                                        p = (i + direction[0] * (step + c),
+                                             j + direction[1] * (step + c),
+                                             k + direction[2] * (step + c),
+                                             x + direction[3] * (step + c))
+                                        value = state.board[p[0]][p[1]][p[2]][p[3]]
+                                        if value == game.X_PIECE:
+                                            x_pieces += 1
+                                            o_blocked = True
+                                        elif value == game.O_PIECE:
+                                            o_pieces += 1
+                                            x_blocked = True
+                                        elif value == game.BLOCK_PIECE:
+                                            x_blocked = True
+                                            o_blocked = True
 
-                                        if not x_blocked:
-                                            if x_pieces == state.k:
-                                                return win_value
-                                            elif x_pieces != 0:
-                                                x_value += 10**x_pieces
-                                        if not o_blocked:
-                                            if o_pieces == state.k:
-                                                return -win_value
-                                            elif o_pieces != 0:
-                                                o_value += 10**o_pieces
+                                    if not x_blocked:
+                                        if x_pieces == state.k:
+                                            return win_value
+                                        elif x_pieces != 0:
+                                            x_value += 10 ** x_pieces
+                                    if not o_blocked:
+                                        if o_pieces == state.k:
+                                            return -win_value
+                                        elif o_pieces != 0:
+                                            o_value += 10 ** o_pieces
 
         return x_value - o_value

@@ -5,7 +5,6 @@ author: CSE 415 course staff
 Any modifications you make to this file will not be considered during grading, so you probably shouldn't change it.
 """
 import game
-import random
 from typing import final
 from threading import Thread
 
@@ -48,7 +47,7 @@ class Agent:
     @final
     def get_move(self, state: game.GameState, time_limit: float = None) -> (int, int):
         """
-        Called by the game runner to get your agent's move. This is a final method, meaning it cannot be overriden.
+        Called by the game runner to get your agent's move. This is a final method, meaning it cannot be overridden.
         Handles the time limit, stopping the agent's play if it takes too long. Calls your choose_move method.
         :param state: game state
         :param time_limit: time (in seconds) before you'll be cutoff and forfeit the game
@@ -78,7 +77,7 @@ class Agent:
 
         while True:
             player_input = [int(i) for i in input("Enter your move: ").split()]
-            move = (0, 0, 0, player_input[0], player_input[1])
+            move = (player_input[0], player_input[1], player_input[2], player_input[3])
             if state.is_valid_move(move):
                 break
             else:
@@ -118,19 +117,22 @@ class Agent:
         """
         Prints the game board and indicates the last move played.
         """
-        h = state.d[4]
-        w = state.d[3]
-        for s in range(state.d[2]):
-            print("+" + "-" * (4*w-1) + "+")
-            for i in range(w):
+        big_rows = state.d[0]
+        big_cols = state.d[1]
+        rows = state.d[2]
+        cols = state.d[3]
+        for R in range(big_rows):
+            print(("+" + "-" * (4*cols-1) + "+  ")*big_cols)
+            for r in range(rows):
                 row_string = ""
-                for j in range(h):
-                    row_string += "|"
-                    if (s, i, j) == (best_move[2], best_move[3], best_move[4]):
-                        row_string += "[" + self.piece + "]"
-                    else:
-                        centre_piece = state.board[0][0][s][i][j]
-                        row_string += " " + centre_piece + " "
-                row_string += "|"
+                for C in range(big_cols):
+                    for c in range(cols):
+                        row_string += "|"
+                        if (R, C, r, c) == (best_move[0], best_move[1], best_move[2], best_move[3]):
+                            row_string += "[" + self.piece + "]"
+                        else:
+                            centre_piece = state.board[R][C][r][c]
+                            row_string += " " + centre_piece + " "
+                    row_string += "|  "
                 print(row_string)
-            print("+" + "-" * (4*w-1) + "+")
+            print(("+" + "-" * (4*cols-1) + "+  ")*big_cols)

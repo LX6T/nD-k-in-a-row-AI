@@ -8,7 +8,6 @@ You should not modify this file.
 import copy
 from dataclasses import dataclass
 from functools import cached_property
-import re
 
 """
 Use these globals below for good programming practices instead of hard coding 'X' or 'O' into your code.
@@ -25,7 +24,7 @@ class GameState:
     Data type for the game state. Contains the board, the next player to move, and k (pieces in a row to win).
     Because this is a dataclass, functions such as the constructor are automatically created despite not being shown.
     """
-    board: list[list[list[list[list[str]]]]]  # n-dimensional array of board pieces
+    board: list[list[list[list[str]]]]  # n-dimensional array of board pieces
     next_player: str
     k: int
 
@@ -45,8 +44,7 @@ class GameState:
         return [len(self.board),
                 len(self.board[0]),
                 len(self.board[0][0]),
-                len(self.board[0][0][0]),
-                len(self.board[0][0][0][0])]
+                len(self.board[0][0][0])]
 
     @cached_property
     def directions(self):
@@ -58,7 +56,7 @@ class GameState:
         directions = []
         n = len(units)
 
-        direction = [0, 0, 0, 0, 0]
+        direction = [0, 0, 0, 0]
         for i in range(n):
             u1 = units[i]
             direction[u1] = 1
@@ -78,19 +76,13 @@ class GameState:
                                 for pm4 in range(-1, 2, 2):
                                     direction[u3] = pm4
                                     directions.append(direction.copy())
-                                    for y in range(x + 1, n):
-                                        u5 = units[y]
-                                        for pm5 in range(-1, 2, 2):
-                                            direction[u3] = pm5
-                                            directions.append(direction.copy())
-                                        direction[u5] = 0
                                 direction[u4] = 0
                         direction[u3] = 0
                 direction[u2] = 0
             direction[u1] = 0
         return directions
 
-    def is_valid_move(self, move: (int, int, int, int, int)) -> bool:
+    def is_valid_move(self, move: (int, int, int, int)) -> bool:
         """
         Test for if a move is allowed or not.
         :param move: Tuple of (x,y) coords of the desired move
@@ -100,25 +92,24 @@ class GameState:
                 move[1] < self.d[1] and
                 move[2] < self.d[2] and
                 move[3] < self.d[3] and
-                move[4] < self.d[4] and
-                self.board[move[0]][move[1]][move[2]][move[3]][move[4]] is EMPTY_PIECE)
+                self.board[move[0]][move[1]][move[2]][move[3]] is EMPTY_PIECE)
 
-    def make_move(self, move: (int, int, int, int, int)) -> "GameState":
+    def make_move(self, move: (int, int, int, int)) -> "GameState":
         """
         Applies a move to the game board and returns the new state
         :param move: Tuple of (x,y) coords of the desired move
         :return: new state with the move applied
         """
         assert self.is_valid_move(move)
-        nboard = copy.deepcopy(self.board)
-        nboard[move[0]][move[1]][move[2]][move[3]][move[4]] = self.next_player
-        nplayer = X_PIECE if self.next_player is O_PIECE else O_PIECE
-        nstate = GameState(nboard, nplayer, self.k)
-        return nstate
+        new_board = copy.deepcopy(self.board)
+        new_board[move[0]][move[1]][move[2]][move[3]] = self.next_player
+        new_player = X_PIECE if self.next_player is O_PIECE else O_PIECE
+        new_state = GameState(new_board, new_player, self.k)
+        return new_state
 
     def is_valid_starting_point(self, point, direction):
         is_on_boundary = False
-        max_steps = max(self.d[0], self.d[1], self.d[2], self.d[3], self.d[4])
+        max_steps = max(self.d[0], self.d[1], self.d[2], self.d[3])
         for i in range(self.n):
             if direction[i] == 1:
                 max_steps = min(max_steps, (self.d[i] - point[i] - self.k) + 1)
@@ -149,33 +140,31 @@ class GameState:
                 for j in range(self.d[1]):
                     for k in range(self.d[2]):
                         for x in range(self.d[3]):
-                            for y in range(self.d[4]):
-                                if self.board[i][j][k][x][y] is EMPTY_PIECE:
-                                    empty_spaces += 1
-                                valid, steps = self.is_valid_starting_point((i, j, k, x, y), direction)
-                                if valid:
-                                    # print((i, j, k, x, y), steps)
-                                    for step in range(steps):
-                                        x_pieces = 0
-                                        o_pieces = 0
-                                        for c in range(self.k):
-                                            p = (i + direction[0] * (step + c),
-                                                 j + direction[1] * (step + c),
-                                                 k + direction[2] * (step + c),
-                                                 x + direction[3] * (step + c),
-                                                 y + direction[4] * (step + c))
-                                            value = self.board[p[0]][p[1]][p[2]][p[3]][p[4]]
-                                            if value == X_PIECE:
-                                                x_pieces += 1
-                                            elif value == O_PIECE:
-                                                o_pieces += 1
-                                            if x_pieces < c and o_pieces < c:
-                                                break
+                            if self.board[i][j][k][x] is EMPTY_PIECE:
+                                empty_spaces += 1
+                            valid, steps = self.is_valid_starting_point((i, j, k, x), direction)
+                            if valid:
+                                # print((i, j, k, x), steps)
+                                for step in range(steps):
+                                    x_pieces = 0
+                                    o_pieces = 0
+                                    for c in range(self.k):
+                                        p = (i + direction[0] * (step + c),
+                                             j + direction[1] * (step + c),
+                                             k + direction[2] * (step + c),
+                                             x + direction[3] * (step + c))
+                                        value = self.board[p[0]][p[1]][p[2]][p[3]]
+                                        if value == X_PIECE:
+                                            x_pieces += 1
+                                        elif value == O_PIECE:
+                                            o_pieces += 1
+                                        if x_pieces < c and o_pieces < c:
+                                            break
 
-                                        if x_pieces == self.k:
-                                            return X_PIECE
-                                        elif o_pieces == self.k:
-                                            return O_PIECE
+                                    if x_pieces == self.k:
+                                        return X_PIECE
+                                    elif o_pieces == self.k:
+                                        return O_PIECE
 
         if empty_spaces == 0:
             return 'draw'
@@ -183,9 +172,9 @@ class GameState:
             return None
 
     @classmethod
-    def empty(cls, size: (int, int, int, int, int), k: int, first: str = X_PIECE):
+    def empty(cls, size: (int, int, int, int), k: int, first: str = X_PIECE):
         """
-        Creates a new empty board. Because this is a classmethod, call this function by referring to the class instead
+        Creates a new empty board. Because this is a class method, call this function by referring to the class instead
         of an instance of the class, such as GameState.empty() instead of state.empty()
         :param size: tuple of dimensions of the board
         :param k: pieces in a row needed to win
@@ -193,37 +182,36 @@ class GameState:
         :return: new board
         """
         assert k <= max(size)
-        nboard = [[[[[EMPTY_PIECE
-                      for a in range(size[4])]
-                     for b in range(size[3])]
-                    for c in range(size[2])]
-                   for d in range(size[1])]
-                  for e in range(size[0])]
-        return GameState(nboard, first, k)
+        new_board = [[[[EMPTY_PIECE
+                        for a in range(size[3])]
+                       for b in range(size[2])]
+                      for c in range(size[1])]
+                     for d in range(size[0])]
+        return GameState(new_board, first, k)
 
     @classmethod
     def tic_tac_toe(cls):
-        return cls.empty((1, 1, 1, 3, 3), 3)
+        return cls.empty((1, 1, 3, 3), 3)
 
     @classmethod
     def no_corners(cls):
-        nboard = [['-', ' ', ' ', ' ', ' ', ' ', '-'],
-                  [' ', ' ', ' ', ' ', ' ', ' ', ' '],
-                  [' ', ' ', ' ', ' ', ' ', ' ', ' '],
-                  [' ', ' ', ' ', ' ', ' ', ' ', ' '],
-                  [' ', ' ', ' ', ' ', ' ', ' ', ' '],
-                  [' ', ' ', ' ', ' ', ' ', ' ', ' '],
-                  ['-', ' ', ' ', ' ', ' ', ' ', '-']]
-        return GameState([[[nboard]]], X_PIECE, 5)
+        new_board = [[[['-', ' ', ' ', ' ', ' ', ' ', '-'],
+                       [' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                       [' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                       [' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                       [' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                       [' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                       ['-', ' ', ' ', ' ', ' ', ' ', '-']]]]
+        return GameState(new_board, X_PIECE, 5)
 
     @classmethod
     def no_corners_small(cls):
-        nboard = [['-', ' ', ' ', ' ', '-'],
-                  [' ', ' ', ' ', ' ', ' '],
-                  [' ', ' ', ' ', ' ', ' '],
-                  [' ', ' ', ' ', ' ', ' '],
-                  ['-', ' ', ' ', ' ', '-']]
-        return GameState([[[nboard]]], X_PIECE, 4)
+        new_board = [[[['-', ' ', ' ', ' ', '-'],
+                       [' ', ' ', ' ', ' ', ' '],
+                       [' ', ' ', ' ', ' ', ' '],
+                       [' ', ' ', ' ', ' ', ' '],
+                       ['-', ' ', ' ', ' ', '-']]]]
+        return GameState(new_board, X_PIECE, 4)
 
     def __str__(self):
         s = '+--' + 4 * (self.d[0] - 1) * '-' + '-+\n'
